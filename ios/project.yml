@@ -1,0 +1,79 @@
+name: Spacebomber
+options:
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+    GENERATE_INFOPLIST_FILE: YES
+    INFOPLIST_KEY_UILaunchScreen_Generation: YES
+    INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+    INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
+    INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Spacebomber uses Bluetooth to find and connect to your Mentra Live glasses."
+    INFOPLIST_KEY_NSMicrophoneUsageDescription: "Spacebomber uses the microphone if a phone audio route is needed. Conversations use the glasses microphone."
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+packages:
+  MentraBluetoothSDK:
+    url: https://github.com/Mentra-Community/mentra-bluetooth-sdk-ios.git
+    exactVersion: "3.1.1"
+
+targets:
+  Spacebomber:
+    type: application
+    platform: iOS
+    sources:
+      - path: Spacebomber
+    dependencies:
+      - package: MentraBluetoothSDK
+        product: MentraBluetoothSDK
+    info:
+      path: Spacebomber/Info.plist
+      properties:
+        NSBluetoothAlwaysUsageDescription: "Spacebomber uses Bluetooth to find and connect to your Mentra Live glasses."
+        NSMicrophoneUsageDescription: "Spacebomber uses the microphone if a phone audio route is needed. Conversations use the glasses microphone."
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        OPENAI_API_KEY: "$(OPENAI_API_KEY)"
+    configFiles:
+      Debug: Config/App.xcconfig
+      Release: Config/App.xcconfig
+    settings:
+      base:
+        INFOPLIST_KEY_CFBundleDisplayName: "Spacebomber"
+      configs:
+        Debug:
+          ENABLE_TESTABILITY: YES
+
+  SpacebomberTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SpacebomberTests
+    dependencies:
+      - target: Spacebomber
+    configFiles:
+      Debug: Config/App.xcconfig
+      Release: Config/App.xcconfig
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.andrewcortado.spacebomber.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Spacebomber.app/Spacebomber"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+schemes:
+  Spacebomber:
+    build:
+      targets:
+        Spacebomber: all
+        SpacebomberTests: [test]
+    test:
+      targets:
+        - SpacebomberTests
