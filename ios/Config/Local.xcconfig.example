@@ -1,0 +1,3 @@
+// Copy to Local.xcconfig (gitignored). Do not commit a Team ID or API key.
+DEVELOPMENT_TEAM = YOURTEAMID
+OPENAI_API_KEY = YOUR_OPENAI_API_KEY
