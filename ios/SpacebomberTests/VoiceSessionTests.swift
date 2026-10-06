@@ -51,6 +51,21 @@ final class VoiceSessionTests: XCTestCase {
         XCTAssertEqual(session.phase, .failed("boom"))
     }
 
+    func testServerStatusKeepsTheSessionOpen() {
+        let agent = FakeVoiceAgent()
+        let player = SpyPlayer()
+        let (session, _) = makeSession(agent: agent, player: player)
+        session.start()
+        XCTAssertEqual(session.phase, .listening)
+
+        agent.emit(.status("bad model"))
+
+        XCTAssertEqual(session.phase, .listening)
+        XCTAssertTrue(session.isRunning)
+        XCTAssertEqual(session.statusMessage, "bad model")
+        XCTAssertEqual(player.flushed, 0)
+    }
+
     func testMissingKeyFails() {
         let (session, _) = makeSession(agent: nil, player: SpyPlayer())
         session.start()

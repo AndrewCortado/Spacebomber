@@ -37,6 +37,7 @@ final class VoiceSession: ObservableObject {
     static let halfDuplexTail: TimeInterval = 0.3
 
     @Published private(set) var phase: Phase = .idle
+    @Published private(set) var statusMessage: String?
     @Published private(set) var micLevel: Float = 0
 
     var isRunning: Bool {
@@ -85,6 +86,7 @@ final class VoiceSession: ObservableObject {
             self?.handle(event)
         }
         phase = .connecting
+        statusMessage = nil
         gate.clear()
         playbackActive = false
         bindPlayer()
@@ -109,6 +111,7 @@ final class VoiceSession: ObservableObject {
         current?.onEvent = nil
         current?.stop()
         endPlayback()
+        statusMessage = nil
         phase = .idle
     }
 
@@ -145,6 +148,8 @@ final class VoiceSession: ObservableObject {
             if !playbackActive {
                 phase = .listening
             }
+        case let .status(message):
+            statusMessage = message
         case let .closed(error):
             running = false
             self.agent = nil

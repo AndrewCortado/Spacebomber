@@ -27,6 +27,8 @@ struct ContentView: View {
                 Text(Secrets.missingKeyMessage)
             } else if case let .failed(message) = session.phase {
                 Text(message)
+            } else if let statusMessage = session.statusMessage {
+                Text(statusMessage)
             }
             HStack {
                 Text("Mic")

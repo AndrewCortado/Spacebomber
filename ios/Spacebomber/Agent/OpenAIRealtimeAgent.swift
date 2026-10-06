@@ -1,7 +1,4 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 @MainActor
 final class OpenAIRealtimeAgent: VoiceAgent {
@@ -17,9 +14,7 @@ final class OpenAIRealtimeAgent: VoiceAgent {
     private var pending = Data()
     private var didClose = false
     private var didSendSessionUpdate = false
-    #if canImport(AVFoundation)
     private var resamplers: [Int: PCMResampler] = [:]
-    #endif
 
     init(apiKey: String, session: URLSession = .shared) {
         self.apiKey = apiKey
@@ -93,7 +88,7 @@ final class OpenAIRealtimeAgent: VoiceAgent {
             return .responseDone
         case "error":
             let message = (object["error"] as? [String: Any])?["message"] as? String ?? "Realtime error"
-            return .closed(error: message)
+            return .status(message)
         default:
             return nil
         }
@@ -126,16 +121,12 @@ final class OpenAIRealtimeAgent: VoiceAgent {
     }
 
     private func resampled(_ frame: PCMFrame) -> Data {
-        #if canImport(AVFoundation)
         if frame.sampleRate == Self.pcmRate {
             return frame.samples
         }
         let resampler = resamplers[frame.sampleRate] ?? PCMResampler(from: frame.sampleRate, to: Self.pcmRate)
         resamplers[frame.sampleRate] = resampler
         return resampler.convert(frame.samples)
-        #else
-        return frame.samples
-        #endif
     }
 
     private func sendSessionUpdate() {
@@ -194,10 +185,6 @@ final class OpenAIRealtimeAgent: VoiceAgent {
             text = nil
         }
         guard let text, let data = text.data(using: .utf8), let event = Self.event(from: data) else { return }
-        if case let .closed(error) = event {
-            finish(error: error)
-            return
-        }
         onEvent?(event)
     }
 

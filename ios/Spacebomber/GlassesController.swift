@@ -209,6 +209,11 @@ final class GlassesController: ObservableObject, MentraBluetoothSDKDelegate {
         statusMessage = error.message
     }
 
+    func mentraBluetoothSDK(_: MentraBluetoothSDK, didReceive event: BluetoothEvent) {
+        guard case let .micHealth(health) = event else { return }
+        statusMessage = "mic_health reason=\(health.reason) sequenceGapEvents=\(health.sequenceGapEvents) decodeFailures=\(health.decodeFailures)"
+    }
+
     func mentraBluetoothSDK(_: MentraBluetoothSDK, didReceiveMicPcm event: MicPcmEvent) {
         onMicPCM?(PCMFrame(samples: event.pcm, sampleRate: event.sampleRate))
     }

@@ -35,7 +35,7 @@ final class OpenAIRealtimeAgentTests: XCTestCase {
         XCTAssertEqual(try event(#"{"type":"input_audio_buffer.speech_started"}"#), .userSpeechStarted)
         XCTAssertEqual(try event(#"{"type":"input_audio_buffer.speech_stopped"}"#), .userSpeechEnded)
         XCTAssertEqual(try event(#"{"type":"response.done"}"#), .responseDone)
-        XCTAssertEqual(try event(#"{"type":"error","error":{"message":"bad model"}}"#), .closed(error: "bad model"))
+        XCTAssertEqual(try event(#"{"type":"error","error":{"message":"bad model"}}"#), .status("bad model"))
         XCTAssertNil(try event(#"{"type":"rate_limits.updated"}"#))
 
         let pcm = Data([0x10, 0x20, 0x30, 0x40])

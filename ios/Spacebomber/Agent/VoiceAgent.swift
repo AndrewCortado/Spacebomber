@@ -11,6 +11,7 @@ enum VoiceAgentEvent: Equatable, Sendable {
     case userSpeechEnded
     case audio(PCMFrame)
     case responseDone
+    case status(String)
     case closed(error: String?)
 }
 

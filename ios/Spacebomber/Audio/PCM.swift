@@ -1,7 +1,5 @@
-import Foundation
-#if canImport(AVFoundation)
 import AVFoundation
-#endif
+import Foundation
 
 enum PCM {
     static func floats(fromInt16 data: Data) -> [Float] {
@@ -30,7 +28,6 @@ enum PCM {
     }
 }
 
-#if canImport(AVFoundation)
 final class PCMResampler {
     private let converter: AVAudioConverter
     private let inputFormat: AVAudioFormat
@@ -96,4 +93,3 @@ final class PCMResampler {
         return PCM.int16Data(from: output)
     }
 }
-#endif

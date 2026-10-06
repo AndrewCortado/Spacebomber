@@ -23,6 +23,8 @@ final class AgentAudioPlayer: AgentPlayback {
     private var prepared = false
     private var pendingBuffers = 0
     private var playbackGeneration = 0
+    private var engineObserver: NSObjectProtocol?
+    private var interruptionObserver: NSObjectProtocol?
 
     init() {
         engine = AVAudioEngine()
@@ -62,6 +64,7 @@ final class AgentAudioPlayer: AgentPlayback {
         if !playerNode.isPlaying {
             playerNode.play()
         }
+        observeRouteChanges()
     }
 
     func enqueue(_ frame: PCMFrame) {
@@ -85,11 +88,79 @@ final class AgentAudioPlayer: AgentPlayback {
     }
 
     func stop() {
+        removeObservers()
         playbackGeneration += 1
         pendingBuffers = 0
         playerNode.stop()
         engine.stop()
         try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
+    }
+
+    deinit {
+        let center = NotificationCenter.default
+        if let engineObserver {
+            center.removeObserver(engineObserver)
+        }
+        if let interruptionObserver {
+            center.removeObserver(interruptionObserver)
+        }
+    }
+
+    private func observeRouteChanges() {
+        if engineObserver == nil {
+            engineObserver = NotificationCenter.default.addObserver(
+                forName: .AVAudioEngineConfigurationChange,
+                object: engine,
+                queue: nil
+            ) { [weak self] _ in
+                Task { @MainActor in
+                    self?.recoverPlayback()
+                }
+            }
+        }
+        if interruptionObserver == nil {
+            interruptionObserver = NotificationCenter.default.addObserver(
+                forName: AVAudioSession.interruptionNotification,
+                object: AVAudioSession.sharedInstance(),
+                queue: nil
+            ) { [weak self] notification in
+                Task { @MainActor in
+                    self?.handleInterruption(notification)
+                }
+            }
+        }
+    }
+
+    private func handleInterruption(_ notification: Notification) {
+        let raw = (notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? NSNumber)?.uintValue
+        guard let raw, AVAudioSession.InterruptionType(rawValue: raw) == .ended else { return }
+        recoverPlayback()
+    }
+
+    private func recoverPlayback() {
+        let wasActive = pendingBuffers > 0
+        playbackGeneration += 1
+        pendingBuffers = 0
+        if wasActive {
+            onActiveChanged?(false)
+        }
+        guard prepared else { return }
+        if !engine.isRunning {
+            try? engine.start()
+        }
+        playerNode.play()
+    }
+
+    private func removeObservers() {
+        let center = NotificationCenter.default
+        if let engineObserver {
+            center.removeObserver(engineObserver)
+            self.engineObserver = nil
+        }
+        if let interruptionObserver {
+            center.removeObserver(interruptionObserver)
+            self.interruptionObserver = nil
+        }
     }
 
     private func schedule(_ samples: [Float]) {
